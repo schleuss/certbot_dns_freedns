@@ -24,7 +24,6 @@ class Authenticator(dns_common.DNSAuthenticator):
     """
 
     description = "Obtain certificates using a DNS TXT record (if you are using FreeDNS for DNS)."
-    ttl = 60
 
     def __init__(self, *args, **kwargs):
         super(Authenticator, self).__init__(*args, **kwargs)
@@ -54,12 +53,12 @@ class Authenticator(dns_common.DNSAuthenticator):
 
     def _perform(self, domain, validation_name, validation):
         self._get_freedns_client().add_txt_record(
-            domain, validation_name, validation, self.ttl
+            domain, validation_name, validation
         )
 
     def _cleanup(self, domain, validation_name, validation):
         self._get_freedns_client().del_txt_record(
-            domain, validation_name, validation, self.ttl
+            domain, validation_name, validation
         )
 
     def _get_freedns_client(self):
@@ -99,7 +98,7 @@ class _FreeDNSClient(object):
     def _get_url(self, path):
         return "{0}{1}".format(self.endpoint, path)
 
-    def add_txt_record(self, domain, record_name, record_content, record_ttl):
+    def add_txt_record(self, domain, record_name, record_content):
         self._login()
         zone_id, zone_name = self._find_managed_zone_id(domain)
         if zone_id is None:
@@ -121,13 +120,13 @@ class _FreeDNSClient(object):
             else:
                 logger.info("update {0}".format(record["id"]))
                 self._update_txt_record(
-                    zone_id, record["id"], record_name, record_content, record_ttl
+                    zone_id, record["id"], record_name, record_content
                 )
         else:
             logger.info("insert new txt record")
-            self._insert_txt_record(zone_id, record_name, record_content, record_ttl)
+            self._insert_txt_record(zone_id, record_name, record_content)
 
-    def del_txt_record(self, domain, record_name, record_content, record_ttl):
+    def del_txt_record(self, domain, record_name, record_content):
         self._login()
         zone_id, zone_name = self._find_managed_zone_id(domain)
         
@@ -154,15 +153,15 @@ class _FreeDNSClient(object):
                     return True
         return False
 
-    def _insert_txt_record(self, zone_id, record_name, record_content, record_ttl):
-        logger.debug("insert with data: %s", (zone_id, record_name, record_content, record_ttl))
-        return self._edit_txt_record(zone_id, None, record_name, record_content, record_ttl)
+    def _insert_txt_record(self, zone_id, record_name, record_content):
+        logger.debug("insert with data: %s", (zone_id, record_name, record_content))
+        return self._edit_txt_record(zone_id, None, record_name, record_content)
 
-    def _update_txt_record(self, zone_id, primary_id, record_name, record_content, record_ttl):
-        logger.debug("update with data: %s", (zone_id, primary_id, record_name, record_content, record_ttl))
-        return self._edit_txt_record(zone_id, primary_id, record_name, record_content, record_ttl)
+    def _update_txt_record(self, zone_id, primary_id, record_name, record_content):
+        logger.debug("update with data: %s", (zone_id, primary_id, record_name, record_content))
+        return self._edit_txt_record(zone_id, primary_id, record_name, record_content)
 
-    def _edit_txt_record(self, zone_id, primary_id, record_name, record_content, record_ttl):
+    def _edit_txt_record(self, zone_id, primary_id, record_name, record_content):
         # Valid types: A, AAAA, CNAME, CAA, NS, MX, TXT, SPF, LOC, HINFO, RP, SRV, SSHFP, 
         txt_data = '"{}"'.format(record_content)
         params = {"type": "TXT", 
@@ -173,9 +172,6 @@ class _FreeDNSClient(object):
 
         if primary_id is not None:
             params["data_id"] = primary_id
-    
-        if record_ttl is not None:
-            params["ttl"] = record_ttl    
 
         response = self.session.post(self.endpoint+"/subdomain/save.php?step=2", data=params)
         if response.status_code == 200:
@@ -283,7 +279,6 @@ class _FreeDNSClient(object):
 
             if form is not None:
                 input_wildcard = soup.find("input", recursive=True, attrs={"name": "wildcard"}).get("value")
-                input_ttl = soup.find("input", recursive=True, attrs={"name": "ttl"}).get("value")
                 input_address = soup.find("input", recursive=True, attrs={"name": "address"}).get("value")
                 input_subdomain = soup.find("input", recursive=True, attrs={"name": "subdomain"}).get("value")
 
