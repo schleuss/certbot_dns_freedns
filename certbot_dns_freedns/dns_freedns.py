@@ -177,7 +177,6 @@ class _FreeDNSClient(object):
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, "html.parser")
             title = soup.find("title")
-            #logger.debug("Soup: ", soup)
             if "Problems" not in title.text:
                 return True
             else:
