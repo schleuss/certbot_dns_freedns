@@ -150,7 +150,7 @@ class _FreeDNSClient(object):
         if record_id is not None:
             response = self.session.post("{}/subdomain/delete2.php?data_id%5B%5D={}&submit=delete+selected".format(self.endpoint, record_id))
             if response.status_code == 200:
-                return True
+                    return True
         return False
 
     def _insert_txt_record(self, zone_id, record_name, record_content):
@@ -179,8 +179,6 @@ class _FreeDNSClient(object):
             title = soup.find("title")
             if "Problems" not in title.text:
                 return True
-            else:
-                logger.debug("ERROR")
         return False
 
     def get_existing_txt(self, zone_id, record_name, record_content):
